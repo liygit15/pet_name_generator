@@ -4,7 +4,7 @@ from ..db import db
 
 class Pet(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str]
+    name: Mapped[str | None]
     animal_type: Mapped[str]
     personality: Mapped[str]
     color: Mapped[str]
