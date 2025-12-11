@@ -8,6 +8,23 @@ client = genai.Client()
 
 bp = Blueprint("pets", __name__, url_prefix="/pets")
 
+
+GENERATE_PROMPT = """
+You are a creative pet name generator.
+
+Generate ONE cute, simple pet name based on the following traits:
+- Species: {species}
+- Color: {color}
+- Personality: {personality}
+
+Rules:
+- Only return the name.
+- Do not include quotes.
+- Do not include explanations.
+- The name should be 1 to 2 words only.
+- the only output should be string.
+"""
+
 @bp.post("")
 def create_pet():
     request_body = request.get_json()
@@ -26,21 +43,24 @@ def create_pet():
 
     return {"message": f"Pet name successfully added"}, 201
 
-GENERATE_PROMPT = """
-You are a creative pet name generator.
+@bp.patch("/<pet_id>")
+def change_pet_name(pet_id):
+    pet = validate_model(Pet,pet_id)
 
-Generate ONE cute, simple pet name based on the following traits:
-- Species: {species}
-- Color: {color}
-- Personality: {personality}
+    request_body = {
+        "animal_type": pet.animal_type,
+        "color": pet.color,
+        "personality": pet.personality
+    }
 
-Rules:
-- Only return the name.
-- Do not include quotes.
-- Do not include explanations.
-- The name should be 1 to 2 words only.
-- the only output should be string.
-"""
+    new_name = generate_name(request_body)
+    pet.name = new_name
+
+    db.session.commit()
+
+    return {"message": f"Pet name successfully changed"}, 200
+
+
 def generate_name(request_body):
     input_message = GENERATE_PROMPT.format(
         species = request_body["animal_type"],
